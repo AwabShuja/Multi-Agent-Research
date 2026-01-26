@@ -86,6 +86,7 @@ def run_research(
     # Create and run workflow
     runner = create_runner(
         api_key=settings.groq_api_key,
+        tavily_api_key=settings.tavily_api_key,
         max_iterations=max_iterations,
         enable_checkpointing=True,
     )
