@@ -46,32 +46,35 @@ class AgentRegistry:
     
     _instance: Optional["AgentRegistry"] = None
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, tavily_api_key: str):
         """
         Initialize the agent registry.
         
         Args:
             api_key: Groq API key for all agents
+            tavily_api_key: Tavily API key for researcher
         """
         self.api_key = api_key
+        self.tavily_api_key = tavily_api_key
         self._agents: dict[AgentType, object] = {}
         logger.info("AgentRegistry initialized")
     
     @classmethod
-    def get_instance(cls, api_key: Optional[str] = None) -> "AgentRegistry":
+    def get_instance(cls, api_key: Optional[str] = None, tavily_api_key: Optional[str] = None) -> "AgentRegistry":
         """
         Get the singleton registry instance.
         
         Args:
-            api_key: API key (required on first call)
+            api_key: Groq API key (required on first call)
+            tavily_api_key: Tavily API key (required on first call)
             
         Returns:
             AgentRegistry instance
         """
         if cls._instance is None:
-            if api_key is None:
-                raise ValueError("API key required for first initialization")
-            cls._instance = cls(api_key)
+            if api_key is None or tavily_api_key is None:
+                raise ValueError("Both API keys required for first initialization")
+            cls._instance = cls(api_key, tavily_api_key)
         return cls._instance
     
     @classmethod
@@ -82,7 +85,10 @@ class AgentRegistry:
     def get_researcher(self) -> ResearcherAgent:
         """Get or create the Researcher agent."""
         if "researcher" not in self._agents:
-            self._agents["researcher"] = ResearcherAgent(api_key=self.api_key)
+            self._agents["researcher"] = ResearcherAgent(
+                api_key=self.api_key,
+                tavily_api_key=self.tavily_api_key,
+            )
         return self._agents["researcher"]
     
     def get_analyst(self) -> AnalystAgent:
@@ -114,7 +120,7 @@ class AgentRegistry:
 # Global Registry Access
 # =============================================================================
 
-def initialize_registry(api_key: str) -> AgentRegistry:
+def initialize_registry(api_key: str, tavily_api_key: str) -> AgentRegistry:
     """
     Initialize the global agent registry.
     
@@ -122,12 +128,13 @@ def initialize_registry(api_key: str) -> AgentRegistry:
     
     Args:
         api_key: Groq API key
+        tavily_api_key: Tavily API key for research
         
     Returns:
         Initialized AgentRegistry
     """
     AgentRegistry.reset()  # Clear any existing instance
-    return AgentRegistry.get_instance(api_key)
+    return AgentRegistry.get_instance(api_key, tavily_api_key)
 
 
 def get_registry() -> AgentRegistry:

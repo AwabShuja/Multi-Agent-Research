@@ -51,19 +51,21 @@ class WorkflowBuilder:
     the LangGraph StateGraph.
     """
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, tavily_api_key: str):
         """
         Initialize the workflow builder.
         
         Args:
             api_key: Groq API key for agents
+            tavily_api_key: Tavily API key for research
         """
         self.api_key = api_key
+        self.tavily_api_key = tavily_api_key
         self.graph: Optional[StateGraph] = None
         self.checkpointer: Optional[MemorySaver] = None
         
         # Initialize agent registry
-        initialize_registry(api_key)
+        initialize_registry(api_key, tavily_api_key)
         
         logger.info("WorkflowBuilder initialized")
     
@@ -251,6 +253,7 @@ class WorkflowRunner:
     def __init__(
         self,
         api_key: str,
+        tavily_api_key: str,
         max_iterations: int = 3,
         enable_checkpointing: bool = True,
     ):
@@ -259,14 +262,16 @@ class WorkflowRunner:
         
         Args:
             api_key: Groq API key
+            tavily_api_key: Tavily API key for research
             max_iterations: Maximum revision iterations
             enable_checkpointing: Whether to enable state checkpointing
         """
         self.api_key = api_key
+        self.tavily_api_key = tavily_api_key
         self.max_iterations = max_iterations
         
         # Build and compile workflow
-        builder = WorkflowBuilder(api_key)
+        builder = WorkflowBuilder(api_key, tavily_api_key)
         
         if enable_checkpointing:
             builder.with_checkpointer()
@@ -402,7 +407,7 @@ class WorkflowRunner:
 # Factory Functions
 # =============================================================================
 
-def create_workflow(api_key: str) -> CompiledStateGraph:
+def create_workflow(api_key: str, tavily_api_key: str) -> CompiledStateGraph:
     """
     Create and compile the workflow graph.
     
@@ -410,17 +415,19 @@ def create_workflow(api_key: str) -> CompiledStateGraph:
     
     Args:
         api_key: Groq API key
+        tavily_api_key: Tavily API key for research
         
     Returns:
         Compiled workflow
     """
-    builder = WorkflowBuilder(api_key)
+    builder = WorkflowBuilder(api_key, tavily_api_key)
     builder.build()
     return builder.compile()
 
 
 def create_runner(
     api_key: str,
+    tavily_api_key: str,
     max_iterations: int = 3,
     enable_checkpointing: bool = True,
 ) -> WorkflowRunner:
@@ -431,6 +438,7 @@ def create_runner(
     
     Args:
         api_key: Groq API key
+        tavily_api_key: Tavily API key for research
         max_iterations: Maximum revision iterations
         enable_checkpointing: Enable state checkpointing
         
@@ -439,6 +447,7 @@ def create_runner(
     """
     return WorkflowRunner(
         api_key=api_key,
+        tavily_api_key=tavily_api_key,
         max_iterations=max_iterations,
         enable_checkpointing=enable_checkpointing,
     )
@@ -448,7 +457,7 @@ def create_runner(
 # Visualization Helper
 # =============================================================================
 
-def get_workflow_diagram(api_key: str) -> str:
+def get_workflow_diagram(api_key: str, tavily_api_key: str) -> str:
     """
     Generate a Mermaid diagram of the workflow.
     
@@ -456,11 +465,12 @@ def get_workflow_diagram(api_key: str) -> str:
     
     Args:
         api_key: Groq API key
+        tavily_api_key: Tavily API key
         
     Returns:
         Mermaid diagram string
     """
-    builder = WorkflowBuilder(api_key)
+    builder = WorkflowBuilder(api_key, tavily_api_key)
     builder.build()
     compiled = builder.compile()
     
